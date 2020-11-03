@@ -16,6 +16,10 @@ const userSchema = new Schema(
       required: true,
       lowercase: true,
     },
+    phone: {
+      type: Number,
+      required: true,
+    },
     password: {
       type: String,
       required: true,
@@ -27,6 +31,10 @@ const userSchema = new Schema(
     role: {
       type: Schema.Types.ObjectId,
       ref: "Role"
+    },
+    courses: {
+      type: Schema.Types.ObjectId,
+      ref: "Course"
     }
   },
   {
