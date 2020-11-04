@@ -1,8 +1,16 @@
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
-
+const mongoose = require("mongoose");
+const nodemailer = require("nodemailer");
 const User = require("../models/User.model");
-const Role = require("../models/Role.model");
+const Role = mongoose.model("Role");
+var transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: "dev.arkar.mm@gmail.com",
+    pass: "hakh872001",
+  },
+});
 
 //#################################################################################################
 //############################# User Account Registeration route ##################################
@@ -16,21 +24,12 @@ const userRegister = (req, res) => {
       const roleId = role._id;
       //check user with username exist or not
       let newUser = new User({
-        name: req.body.name,
+        username: req.body.username,
         email: req.body.email,
+        phone: req.body.phone,
         password: req.body.password,
         role: roleId,
       });
-      User.getuserByUsername(newUser.name, (err, user) => {
-        if (user) {
-          return res.status(400).json({
-            meta: {
-              success: false,
-              message: "This username is already taken.",
-            },
-            self: req.originalUrl,
-          });
-        } else {
           //if not exist user with such username we will check again with email
           User.getuserByEmail(newUser.email, (err, user) => {
             if (user) {
@@ -45,16 +44,17 @@ const userRegister = (req, res) => {
               //if not user with such data, we will send a mail to activiate and create account
 
               //implementing the jwt for mailserver
-              const { name, email, password, role } = newUser;
+              const { username, email, phone, password, role, courses } = newUser;
               const token = jwt.sign(
-                { name, email, password, role },
+                { username, email, phone, password, role , courses},
                 process.env.JWT_ACC_ACTIVATION,
                 { expiresIn: "30m" }
               );
-              const data = {
-                from: "alpha.dev.mm@gmail.com",
+
+              var mailOptions = {
+                from: "support@shlc.study",
                 to: email,
-                subject: "Account Activiation Link",
+                subject: "SHLC account registration.",
                 html: `
             <h2>Please activiate your account by clicking the link given below</h2>
             <a href="${process.env.CLIENT_URL}/api/users/activiate/${token}" style="background-color: #4CAF50;
@@ -65,19 +65,22 @@ const userRegister = (req, res) => {
             text-decoration: none;
             cursour: pointer;
             display: inline-block;
-            font-size: 16px;">click Here</a>
+            font-size: 16px;">Click Here</a>
             `,
               };
-              mg.messages().send(data, (error, body) => {
+
+              transporter.sendMail(mailOptions, function (error, info) {
                 if (error) {
-                  return (500).json({
+                  console.log(error);
+                  return res.status(500).json({
                     meta: {
                       success: false,
-                      errors: error,
+                      message: error,
                     },
                     self: req.originalUrl,
                   });
                 } else {
+                  console.log("Email sent: " + info.response);
                   return res.status(200).json({
                     meta: {
                       success: true,
@@ -90,8 +93,6 @@ const userRegister = (req, res) => {
               //End of implementing the mailserver with jwt
             }
           });
-        }
-      });
     } else {
       return (400).json({
         meta: {
@@ -102,7 +103,7 @@ const userRegister = (req, res) => {
       });
     }
   });
-}
+};
 
 //#################################################################################################
 //################################## User Account login ###########################################
@@ -112,7 +113,16 @@ const userLogin = (req, res) => {
   const password = req.body.password;
 
   User.getuserByEmail(email, (err, user) => {
-    if (err) throw err;
+    if (err) {
+      console.log("Error while getUserByEmail =" + err);
+      return res.status(500).json({
+        meta: {
+          success: false,
+          message: "Server error.[!email verify]",
+        },
+        self: req.originalUrl,
+      });
+    }
     if (!user) {
       return res.status(404).json({
         meta: {
@@ -123,12 +133,21 @@ const userLogin = (req, res) => {
       });
     }
     User.comparePassword(password, user.password, (err, isMath) => {
-      if (err) throw err;
+      if (err) {
+        console.log("Error while comparing password =" + err);
+        return res.status(404).json({
+          meta: {
+            success: false,
+            message: "Server error.[!password comparing]",
+          },
+          self: req.originalUrl,
+        });
+      }
       if (isMath) {
         const token = jwt.sign({ _id: user._id }, process.env.JWT_ACC_LOGIN, {
           expiresIn: "7d",
         });
-        const { _id, name, email, role } = user;
+        const { _id, username, phone, email, role, courses } = user;
         return res.status(200).json({
           meta: {
             success: true,
@@ -138,8 +157,10 @@ const userLogin = (req, res) => {
             token: token,
             user: {
               _id,
-              name,
+              username,
               email,
+              phone,
+              courses,
               role: role.role,
             },
           },
@@ -148,14 +169,14 @@ const userLogin = (req, res) => {
         return res.status(403).json({
           meta: {
             success: false,
-            message: "The password you enter is not match with your email",
+            message: "The password you enter is not match with your email.",
           },
           self: req.originalUrl,
         });
       }
     });
   });
-}
+};
 
 //#################################################################################################
 //################## User Account Activiation and Creation route ##################################
@@ -165,12 +186,15 @@ const userActiviate = (req, res) => {
   if (token) {
     jwt.verify(token, process.env.JWT_ACC_ACTIVATION, (err, decodedToken) => {
       if (err) {
-        return res.status(400).send("Your token is not match or may be expire.");
+        return res
+          .status(400)
+          .send("Your token is not match or may be expire.");
       } else {
-        const { name, email, password, role } = decodedToken;
+        const { username, phone, email, password, role } = decodedToken;
         let newUser = new User({
-          name,
+          username,
           email,
+          phone,
           password,
           role,
         });
@@ -178,9 +202,6 @@ const userActiviate = (req, res) => {
         User.addUser(newUser, (err, user) => {
           if (err) {
             let message = "";
-            if (err.errors.name) {
-              message = "Username is already exist.";
-            }
             if (err.errors.email) {
               message += "Email already taken.";
             }
@@ -207,7 +228,7 @@ const userActiviate = (req, res) => {
   } else {
     res.send("Something Wrong.Please Try again.");
   }
-}
+};
 
 //#################################################################################################
 //################## User Account Forgot Password route ###########################################
@@ -216,7 +237,8 @@ const userForgotPassword = (req, res) => {
   //Check user with such email is exist or not
   const email = req.body.email;
   User.getuserByEmail(email, (err, user) => {
-    if (err || !user) {
+    if (err) {
+      console.log("Error while getUserByEmail =" + err);
       return res.status(404).json({
         meta: {
           success: false,
@@ -230,22 +252,22 @@ const userForgotPassword = (req, res) => {
       const token = jwt.sign({ _id }, process.env.JWT_ACC_FORGET_PW, {
         expiresIn: "30m",
       });
-      const data = {
-        from: "alpha.dev.mm@gmail.com",
+      var mailOptions = {
+        from: "support@shlc.study",
         to: email,
-        subject: "Forget Password Reset Link",
+        subject: "SHLC account registration.",
         html: `
-            <h2>Please click the link below to reset your password.</h2>
-            <a href="${process.env.CLIENT_URL}/api/users/reset-password/${token}" style="background-color: #4CAF50;
-            border: none;
-            color: white;
-            padding: 15px 32px;
-            text-align: center;
-            text-decoration: none;
-            cursour: pointer;
-            display: inline-block;
-            font-size: 16px;">Click Here</a>
-            `,
+    <h2>Please activiate your account by clicking the link given below</h2>
+    <a href="${process.env.CLIENT_URL}/api/users/reset-password/${token}" style="background-color: #4CAF50;
+    border: none;
+    color: white;
+    padding: 15px 32px;
+    text-align: center;
+    text-decoration: none;
+    cursour: pointer;
+    display: inline-block;
+    font-size: 16px;">click Here</a>
+    `,
       };
       //update the reset link
       User.setResetLink(_id, token, (err, success) => {
@@ -253,25 +275,27 @@ const userForgotPassword = (req, res) => {
           return res.status(500).json({
             meta: {
               success: false,
-              errors: err,
+              message: err,
             },
             self: req.originalUrl,
           });
         } else {
-          mg.messages().send(data, (error, body) => {
+          transporter.sendMail(mailOptions, function (error, info) {
             if (error) {
+              console.log(error);
               return res.status(500).json({
                 meta: {
                   success: false,
-                  errors: error,
+                  message: error,
                 },
                 self: req.originalUrl,
               });
             } else {
+              console.log("Email sent: " + info.response);
               return res.status(200).json({
                 meta: {
                   success: true,
-                  message: `Email has been sent,kindly check your mail: ${email}.`,
+                  message: `Email has been sent, kindly check your mail: ${email}.`,
                 },
                 self: req.originalUrl,
               });
@@ -282,7 +306,7 @@ const userForgotPassword = (req, res) => {
       //End of implementing the mailserver with jwt
     }
   });
-}
+};
 
 //#################################################################################################
 //################## User Account Forgot Password Reseter Route ###################################
@@ -344,7 +368,7 @@ const userForgotPasswordUpdate = (req, res) => {
       self: req.originalUrl,
     });
   }
-}
+};
 
 //#################################################################################################
 //################## User Account Change Account information Route ################################
@@ -399,7 +423,8 @@ const userChangepassword = (req, res) => {
                           return res.status(500).json({
                             meta: {
                               success: false,
-                              message: "Internal Server Error.[User Update!]"+err,
+                              message:
+                                "Internal Server Error.[User Update!]" + err,
                             },
                             self: req.originalUrl,
                           });
@@ -439,6 +464,41 @@ const userChangepassword = (req, res) => {
       self: req.originalUrl,
     });
   }
+};
+
+const userFetch = ( req, res ) => {
+  User.find((err, user) => {
+    if(err){
+      return res.status(500).json({ meta: {
+        success: false,
+        message: "There is no password.",
+      },
+      self: req.originalUrl,
+
+      })
+    }
+    else
+    {
+      return res.status(200).json({ meta: {
+        success: true,
+        message: "User Fetching success",
+      },
+      data: {
+        user
+      },
+      self: req.originalUrl,
+
+      })
+    }
+  })
 }
 
-module.exports = { userRegister, userActiviate, userForgotPassword, userForgotPasswordUpdate, userLogin, userChangepassword };
+module.exports = {
+  userRegister,
+  userActiviate,
+  userForgotPassword,
+  userForgotPasswordUpdate,
+  userLogin,
+  userChangepassword,
+  userFetch
+};

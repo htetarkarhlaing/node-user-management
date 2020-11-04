@@ -7,7 +7,22 @@ const courseSchema = new Schema({
     required: true,
     unique: true,
   },
-  instructor: {},
+  instructor: {
+      type: String,
+      require: true
+  },
+  instructorDetail : {
+    type: String,
+    required: true
+  },
+  tag: {
+    type: String,
+    required: true,
+  },
+  level: {
+    type: String,
+    required: true
+  },
   duration: {
     type: Number,
     required: true,

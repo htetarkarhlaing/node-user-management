@@ -13,7 +13,9 @@ const dbUrl = process.env.DB;
 
 mongoose.connect( dbUrl, {
   useNewUrlParser: true,
-  useUnifiedTopology: true
+  useUnifiedTopology: true,
+  useCreateIndex: true,
+  useFindAndModify: false
 }).then(() => {
   console.log('Database Connected');
 }).catch((err)=>{
@@ -31,7 +33,7 @@ app.use(bodyParser.json());
 app.use("/api", route);
 
 //declearingt the Port usng dotenv
-const PORT = process.env.PORT;
+const PORT = process.env.PORT || 8000;
 
 app.listen(PORT, () => {
   console.log(

@@ -5,7 +5,7 @@ const Schema = mongoose.Schema;
 //creating the user schema
 const userSchema = new Schema(
   {
-    name: {
+    username: {
       type: String,
       required: true,
     },
@@ -30,12 +30,9 @@ const userSchema = new Schema(
     },
     role: {
       type: Schema.Types.ObjectId,
-      ref: "Role"
+      ref: "Role",
     },
-    courses: {
-      type: Schema.Types.ObjectId,
-      ref: "Course"
-    }
+    courses: []
   },
   {
     timestamps: true,
@@ -44,9 +41,7 @@ const userSchema = new Schema(
 
 userSchema.plugin(uniqueValidator); //plug-in for unique
 
-const User = (module.exports = mongoose.model("User", userSchema, "users")); // assign as name User and exports as Model.
-
-module.exports.schema = userSchema; // exporting as user schema
+const User = (module.exports = mongoose.model("User", userSchema)); // assign as name User and exports as Model.
 
 //#####################  Custom Model Controllers #############################
 //to find the user by id
