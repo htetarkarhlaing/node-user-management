@@ -1,7 +1,6 @@
 const mongoose = require("mongoose");
 const bcrypt = require("bcrypt");
 const uniqueValidator = require("mongoose-unique-validator");
-const { schema } = require("./role.model");
 const Schema = mongoose.Schema;
 //creating the user schema
 const userSchema = new Schema(

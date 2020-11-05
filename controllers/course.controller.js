@@ -1,4 +1,4 @@
-const Course = require("../models/Course.model");
+const { Course } = require("../models/");
 
 const courseFetcher = async (req, res) => {
   try {

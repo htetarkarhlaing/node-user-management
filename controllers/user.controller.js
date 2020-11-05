@@ -1,9 +1,7 @@
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
-const mongoose = require("mongoose");
 const nodemailer = require("nodemailer");
-const User = require("../models/User.model");
-const Role = mongoose.model("Role");
+const { User, Role } = require("../models");
 var transporter = nodemailer.createTransport({
   service: "gmail",
   auth: {

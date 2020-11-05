@@ -1,4 +1,4 @@
-const Role = require("../models/role.model");
+const { Role } = require("../models");
 
 // Get method for Roles
 const roleFetcher = async (req, res) => {
