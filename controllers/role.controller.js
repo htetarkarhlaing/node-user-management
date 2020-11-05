@@ -4,7 +4,7 @@ const { Role } = require("../models");
 const roleFetcher = async (req, res) => {
   try {
     const roleFetch = await Role.find();
-    res.status(200).json({
+    return res.status(200).json({
       meta: {
         success: true,
         length: roleFetch.length,
@@ -13,7 +13,7 @@ const roleFetcher = async (req, res) => {
       self: req.originalUrl,
     });
   } catch (err) {
-    res.status(500).json({
+    return res.status(500).json({
       meta: {
         success: false,
       },
@@ -29,7 +29,7 @@ const roleInserter = async (req, res) => {
   });
   try {
       const insertRole = await roleAdder.save();
-      res.status(201).json({
+      return res.status(201).json({
           meta: {
               success: true
           },
@@ -37,7 +37,7 @@ const roleInserter = async (req, res) => {
           self: req.originalUrl
       })
   } catch (err) {
-    res.status(500).json({
+    return res.status(500).json({
       meta: {
         success: false,
       },

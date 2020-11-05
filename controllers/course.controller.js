@@ -3,7 +3,7 @@ const { Course } = require("../models/");
 const courseFetcher = async (req, res) => {
   try {
     const courseFetching = await Course.find();
-    res.status(200).json({
+    return res.status(200).json({
       meta: {
         success: true,
         length: courseFetching.length,
@@ -12,7 +12,7 @@ const courseFetcher = async (req, res) => {
       self: req.originalUrl,
     });
   } catch (err) {
-    res.status(500).json({
+    return res.status(500).json({
       meta: {
         success: false,
       },
@@ -25,7 +25,7 @@ const courseSpecifFetcher = async (req, res) => {
   const _id = req.params.id;
   try {
     const courseFetching = await Course.find({_id});
-    res.status(200).json({
+    return res.status(200).json({
       meta: {
         success: true,
         length: courseFetching.length,
@@ -34,7 +34,7 @@ const courseSpecifFetcher = async (req, res) => {
       self: req.originalUrl,
     });
   } catch (err) {
-    res.status(500).json({
+    return res.status(500).json({
       meta: {
         success: false,
       },
@@ -46,6 +46,7 @@ const courseSpecifFetcher = async (req, res) => {
 const courseInserter = async (req, res) => {
   const courseAdder = new Course({
     courseName: req.body.courseName,
+    description: req.body.description,
     instructor: req.body.instructor,
     instructorDetail: req.body.instructorDetail,
     tag: req.body.tag,
@@ -54,7 +55,7 @@ const courseInserter = async (req, res) => {
   });
   try {
     const insertCourse = await courseAdder.save();
-    res.status(201).json({
+    return res.status(201).json({
       meta: {
         success: true,
         message: "Upload success.",
@@ -63,7 +64,7 @@ const courseInserter = async (req, res) => {
       self: req.originalUrl,
     });
   } catch (err) {
-    res.status(500).json({
+    return res.status(500).json({
       meta: {
         success: false,
         message: "fail while inserting course =" + err,
@@ -89,7 +90,7 @@ const lectureInserter = (req, res) => {
         },
       }, (err, course) => {
         if(err){
-          res.status(400).json({
+          return res.status(400).json({
             meta: {
               success: false,
               message: "Error occur " + err,

@@ -17,12 +17,12 @@ route.patch("/users/forgot-password", userForgotPassword);
 route.patch("/users/update-password", userForgotPasswordUpdate);
 route.patch("/users/change-password", verifyToken, userChangepassword);
 route.get("/users", userFetch);
-route.put("/users/enroll-course/:id", verifyToken, userCourseAdder);
+route.put("/users/enroll-course/:id", userCourseAdder);
 route.get("/users/find-courses/:id", verifyToken, userCourseFetcher);
 
 //courses
-route.get("/courses", verifyToken, courseFetcher);
-route.get("/courses/:id", verifyToken, courseSpecifFetcher);
+route.get("/courses", courseFetcher);
+route.get("/courses/:id", courseSpecifFetcher);
 route.post("/courses", courseInserter);
 route.put("/lecture-insert/:id", lectureInserter);
 
