@@ -30,32 +30,32 @@ const userRegister = (req, res) => {
         password: req.body.password,
         role: roleId,
       });
-          //if not exist user with such username we will check again with email
-          User.getuserByEmail(newUser.email, (err, user) => {
-            if (user) {
-              return (400).json({
-                meta: {
-                  success: false,
-                  message: "This email is already taken.",
-                },
-                self: req.originalUrl,
-              });
-            } else {
-              //if not user with such data, we will send a mail to activiate and create account
+      //if not exist user with such username we will check again with email
+      User.getuserByEmail(newUser.email, (err, user) => {
+        if (user) {
+          return (400).json({
+            meta: {
+              success: false,
+              message: "This email is already taken.",
+            },
+            self: req.originalUrl,
+          });
+        } else {
+          //if not user with such data, we will send a mail to activiate and create account
 
-              //implementing the jwt for mailserver
-              const { username, email, phone, password, role, courses } = newUser;
-              const token = jwt.sign(
-                { username, email, phone, password, role , courses},
-                process.env.JWT_ACC_ACTIVATION,
-                { expiresIn: "30m" }
-              );
+          //implementing the jwt for mailserver
+          const { username, email, phone, password, role, courses } = newUser;
+          const token = jwt.sign(
+            { username, email, phone, password, role, courses },
+            process.env.JWT_ACC_ACTIVATION,
+            { expiresIn: "30m" }
+          );
 
-              var mailOptions = {
-                from: "support@shlc.study",
-                to: email,
-                subject: "SHLC account registration.",
-                html: `
+          var mailOptions = {
+            from: "support@shlc.study",
+            to: email,
+            subject: "SHLC account registration.",
+            html: `
             <h2>Please activiate your account by clicking the link given below</h2>
             <a href="${process.env.CLIENT_URL}/api/users/activiate/${token}" style="background-color: #4CAF50;
             border: none;
@@ -67,32 +67,32 @@ const userRegister = (req, res) => {
             display: inline-block;
             font-size: 16px;">Click Here</a>
             `,
-              };
+          };
 
-              transporter.sendMail(mailOptions, function (error, info) {
-                if (error) {
-                  console.log(error);
-                  return res.status(500).json({
-                    meta: {
-                      success: false,
-                      message: error,
-                    },
-                    self: req.originalUrl,
-                  });
-                } else {
-                  console.log("Email sent: " + info.response);
-                  return res.status(200).json({
-                    meta: {
-                      success: true,
-                      message: `Account verification mail is send to ${email}.`,
-                    },
-                    self: req.originalUrl,
-                  });
-                }
+          transporter.sendMail(mailOptions, function (error, info) {
+            if (error) {
+              console.log(error);
+              return res.status(500).json({
+                meta: {
+                  success: false,
+                  message: error,
+                },
+                self: req.originalUrl,
               });
-              //End of implementing the mailserver with jwt
+            } else {
+              console.log("Email sent: " + info.response);
+              return res.status(200).json({
+                meta: {
+                  success: true,
+                  message: `Account verification mail is send to ${email}.`,
+                },
+                self: req.originalUrl,
+              });
             }
           });
+          //End of implementing the mailserver with jwt
+        }
+      });
     } else {
       return (400).json({
         meta: {
@@ -147,7 +147,7 @@ const userLogin = (req, res) => {
         const token = jwt.sign({ _id: user._id }, process.env.JWT_ACC_LOGIN, {
           expiresIn: "7d",
         });
-        const { _id, username, phone, email, role, courses } = user;
+        const { _id, username, phone, email, role } = user;
         return res.status(200).json({
           meta: {
             success: true,
@@ -160,7 +160,6 @@ const userLogin = (req, res) => {
               username,
               email,
               phone,
-              courses,
               role: role.role,
             },
           },
@@ -466,28 +465,92 @@ const userChangepassword = (req, res) => {
   }
 };
 
-const userFetch = ( req, res ) => {
+const userFetch = (req, res) => {
   User.find((err, user) => {
-    if(err){
-      return res.status(500).json({ meta: {
-        success: false,
-        message: "There is no password.",
-      },
-      self: req.originalUrl,
-
-      })
+    if (err) {
+      return res.status(500).json({
+        meta: {
+          success: false,
+          message: "Error occur while fetching user. " + err,
+        },
+        self: req.originalUrl,
+      });
+    } else {
+      return res.status(200).json({
+        meta: {
+          success: true,
+          message: "User Fetching success",
+          lenght: user.length,
+        },
+        data: {
+          user,
+        },
+        self: req.originalUrl,
+      });
     }
-    else
-    {
-      return res.status(200).json({ meta: {
-        success: true,
-        message: "User Fetching success",
+  });
+};
+
+const userCourseAdder = (req, res) => {
+  const _id = req.params.id;
+  const courseId = req.body.courseId;
+  try {
+    User.findByIdAndUpdate(_id, {
+      $push: {
+        courses: courseId,
       },
-      data: {
-        user
+    }, (err, user) => {
+      if(err) {
+        return res.status(400).json({
+          meta: {
+            success: true,
+            message: "Error occur while inserting course to this user " + err,
+          },
+          self: req.originalUrl,
+        })
+      }
+      else {
+        return res.status(201).json({
+          meta: {
+            success: true,
+            message: "Enroll success.",
+          },
+          data: user,
+          self: req.originalUrl,
+        })
+      }
+    });
+  } catch (error) {
+    return res.status(500).json({
+      meta: {
+        success: false,
+        message: "Server error. " + error,
       },
       self: req.originalUrl,
+    });
+  }
+};
 
+const userCourseFetcher = ( req, res ) => {
+  const _id = req.params.id;
+  User.findById(_id).populate("courses").exec((err, user) => {
+    if(err){
+      return res.status(404).json({
+        meta: {
+          success: false,
+          message: "Request fail" + err,
+        },
+        self: req.originalUrl,
+      });
+    }
+    else {
+      return res.status(200).json({
+        meta: {
+          success: true,
+          message: "Fetch success.",
+        },
+        data: user.courses,
+        self: req.originalUrl,
       })
     }
   })
@@ -500,5 +563,7 @@ module.exports = {
   userForgotPasswordUpdate,
   userLogin,
   userChangepassword,
-  userFetch
+  userFetch,
+  userCourseAdder,
+  userCourseFetcher
 };

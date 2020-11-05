@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 const bcrypt = require("bcrypt");
 const uniqueValidator = require("mongoose-unique-validator");
+const { schema } = require("./role.model");
 const Schema = mongoose.Schema;
 //creating the user schema
 const userSchema = new Schema(
@@ -32,7 +33,10 @@ const userSchema = new Schema(
       type: Schema.Types.ObjectId,
       ref: "Role",
     },
-    courses: []
+    courses: [{
+      type: Schema.Types.ObjectId,
+      ref: "Course"
+    }]
   },
   {
     timestamps: true,

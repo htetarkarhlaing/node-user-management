@@ -5,7 +5,6 @@ const courseSchema = new Schema({
   courseName: {
     type: String,
     required: true,
-    unique: true,
   },
   instructor: {
       type: String,
@@ -27,7 +26,22 @@ const courseSchema = new Schema({
     type: Number,
     required: true,
   },
-  lectures: [],
+  lectures: [
+    {
+      title: {
+        type: String,
+        required: true
+      },
+      link: {
+        type: String,
+        required: true
+      },
+      duration: {
+        type: Number,
+        required: true
+      }
+    }
+  ],
 }, {
     timestamps: true
 });
