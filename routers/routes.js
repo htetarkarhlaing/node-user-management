@@ -2,7 +2,7 @@ const express = require("express");
 const route = express.Router();
 const { roleFetcher, roleInserter} = require("../controllers/role.controller");
 const { userCourseFetcher, userFetch, userRegister, userActiviate, userLogin, userChangepassword, userForgotPassword, userForgotPasswordUpdate, userCourseAdder } = require("../controllers/user.controller");
-const { courseFetcher, courseInserter, lectureInserter } = require("../controllers/course.controller");
+const { courseSpecifFetcher, courseFetcher, courseInserter, lectureInserter } = require("../controllers/course.controller");
 const verifyToken = require("../middlewares/jwt");
 
 //roles
@@ -18,10 +18,11 @@ route.patch("/users/update-password", userForgotPasswordUpdate);
 route.patch("/users/change-password", verifyToken, userChangepassword);
 route.get("/users", userFetch);
 route.put("/users/enroll-course/:id", verifyToken, userCourseAdder);
-route.get("/users/find-courses/:id", userCourseFetcher);
+route.get("/users/find-courses/:id", verifyToken, userCourseFetcher);
 
 //courses
-route.get("/courses", courseFetcher);
+route.get("/courses", verifyToken, courseFetcher);
+route.get("/courses/:id", verifyToken, courseSpecifFetcher);
 route.post("/courses", courseInserter);
 route.put("/lecture-insert/:id", lectureInserter);
 

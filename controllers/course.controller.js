@@ -21,6 +21,28 @@ const courseFetcher = async (req, res) => {
   }
 };
 
+const courseSpecifFetcher = async (req, res) => {
+  const _id = req.params.id;
+  try {
+    const courseFetching = await Course.find({_id});
+    res.status(200).json({
+      meta: {
+        success: true,
+        length: courseFetching.length,
+      },
+      data: courseFetching,
+      self: req.originalUrl,
+    });
+  } catch (err) {
+    res.status(500).json({
+      meta: {
+        success: false,
+      },
+      self: req.originalUrl,
+    });
+  }
+};
+
 const courseInserter = async (req, res) => {
   const courseAdder = new Course({
     courseName: req.body.courseName,
@@ -98,4 +120,4 @@ const lectureInserter = (req, res) => {
   }
 };
 
-module.exports = { courseFetcher, courseInserter, lectureInserter };
+module.exports = { courseFetcher, courseInserter, lectureInserter, courseSpecifFetcher };
