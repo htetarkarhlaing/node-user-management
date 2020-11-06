@@ -188,7 +188,7 @@ const userActiviate = (req, res) => {
               self: req.originalUrl,
             });
           } else {
-            res.status(200).json({
+            return res.status(200).json({
               meta: {
                 success: true,
                 message: `Account creation succeed.`,
@@ -201,7 +201,7 @@ const userActiviate = (req, res) => {
       }
     });
   } else {
-    res.send("Something Wrong.Please Try again.");
+    return res.send("Something Wrong.Please Try again.");
   }
 };
 

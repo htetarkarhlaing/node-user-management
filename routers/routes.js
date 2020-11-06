@@ -11,7 +11,7 @@ route.post("/roles", roleInserter);
 
 //users
 route.post("/users/register", userRegister);
-route.get("/users/activiate/:token", userActiviate);
+route.post("/users/activiate/:token", userActiviate);
 route.post("/users/login", userLogin);
 route.patch("/users/forgot-password", userForgotPassword);
 route.patch("/users/update-password/:link", userForgotPasswordUpdate);
