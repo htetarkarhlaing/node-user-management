@@ -24,7 +24,7 @@ const userRegister = (req, res) => {
       //if not exist user with such username we will check again with email
       User.getuserByEmail(newUser.email, (err, user) => {
         if (user) {
-          return (400).json({
+          return res.status(400).json({
             meta: {
               success: false,
               message: "This email is already taken.",
@@ -35,9 +35,9 @@ const userRegister = (req, res) => {
           //if not user with such data, we will send a mail to activiate and create account
 
           //implementing the jwt for mailserver
-          const { username, email, phone, password, role, courses } = newUser;
+          const { username, email, phone, password, role } = newUser;
           const token = jwt.sign(
-            { username, email, phone, password, role, courses },
+            { username, email, phone, password, role },
             process.env.JWT_ACC_ACTIVATION,
             { expiresIn: "24hr" }
           );
@@ -57,7 +57,7 @@ const userRegister = (req, res) => {
                 self: req.originalUrl,
               });
             } else {
-              console.log("Email sent: " + info.response);
+              console.log("Email sent [register]: " + email);
               return res.status(200).json({
                 meta: {
                   success: true,
@@ -70,7 +70,7 @@ const userRegister = (req, res) => {
         }
       });
     } else {
-      return (400).json({
+      return res.status(400).json({
         meta: {
           success: false,
           message: "Requested Role is not avaliable.",
@@ -228,11 +228,6 @@ const userForgotPassword = (req, res) => {
         expiresIn: "30m",
       });
 
-      
-      const link = `${process.env.CLIENT_URL}/forgot-password-update/${token}`;
-      const subject = "SHLC account forgot password";
-      var body = "forgot";
-
       //update the reset link
       User.setResetLink(_id, token, (err, success) => {
         if (err) {
@@ -244,6 +239,9 @@ const userForgotPassword = (req, res) => {
             self: req.originalUrl,
           });
         } else {
+          const link = `${process.env.CLIENT_URL}/forgot-password-update/${token}`;
+          const subject = "SHLC account forgot password";
+          var body = "forgot";
           mailSender(email, subject, body, link, (err, data) => {
             if (err) {
               console.log(err);
@@ -255,7 +253,7 @@ const userForgotPassword = (req, res) => {
                 self: req.originalUrl,
               });
             } else {
-              console.log("Email sent: " + info.response);
+              console.log("Email sent: " + email);
               return res.status(200).json({
                 meta: {
                   success: true,
@@ -460,31 +458,34 @@ const userCourseAdder = (req, res) => {
   const _id = req.params.id;
   const courseId = req.body.courseId;
   try {
-    User.findByIdAndUpdate(_id, {
-      $push: {
-        courses: courseId,
+    User.findByIdAndUpdate(
+      _id,
+      {
+        $push: {
+          courses: courseId,
+        },
       },
-    }, (err, user) => {
-      if(err) {
-        return res.status(400).json({
-          meta: {
-            success: true,
-            message: "Error occur while inserting course to this user " + err,
-          },
-          self: req.originalUrl,
-        })
+      (err, user) => {
+        if (err) {
+          return res.status(400).json({
+            meta: {
+              success: true,
+              message: "Error occur while inserting course to this user " + err,
+            },
+            self: req.originalUrl,
+          });
+        } else {
+          return res.status(201).json({
+            meta: {
+              success: true,
+              message: "Enroll success.",
+            },
+            data: user,
+            self: req.originalUrl,
+          });
+        }
       }
-      else {
-        return res.status(201).json({
-          meta: {
-            success: true,
-            message: "Enroll success.",
-          },
-          data: user,
-          self: req.originalUrl,
-        })
-      }
-    });
+    );
   } catch (error) {
     return res.status(500).json({
       meta: {
@@ -496,30 +497,31 @@ const userCourseAdder = (req, res) => {
   }
 };
 
-const userCourseFetcher = ( req, res ) => {
+const userCourseFetcher = (req, res) => {
   const _id = req.params.id;
-  User.findById(_id).populate("courses").exec((err, user) => {
-    if(err){
-      return res.status(404).json({
-        meta: {
-          success: false,
-          message: "Request fail" + err,
-        },
-        self: req.originalUrl,
-      });
-    }
-    else {
-      return res.status(200).json({
-        meta: {
-          success: true,
-          message: "Fetch success.",
-        },
-        data: user.courses,
-        self: req.originalUrl,
-      })
-    }
-  })
-}
+  User.findById(_id)
+    .populate("courses")
+    .exec((err, user) => {
+      if (err) {
+        return res.status(404).json({
+          meta: {
+            success: false,
+            message: "Request fail" + err,
+          },
+          self: req.originalUrl,
+        });
+      } else {
+        return res.status(200).json({
+          meta: {
+            success: true,
+            message: "Fetch success.",
+          },
+          data: user.courses,
+          self: req.originalUrl,
+        });
+      }
+    });
+};
 
 module.exports = {
   userRegister,
@@ -530,5 +532,5 @@ module.exports = {
   userChangepassword,
   userFetch,
   userCourseAdder,
-  userCourseFetcher
+  userCourseFetcher,
 };
