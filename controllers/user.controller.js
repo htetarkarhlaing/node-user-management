@@ -300,6 +300,7 @@ const userForgotPasswordUpdate = (req, res) => {
           } else {
             User.updatePassword(user._id, newPassword, (err, success) => {
               if (err) {
+                console.log("user update error");
                 return res.status(404).json({
                   meta: {
                     success: false,
