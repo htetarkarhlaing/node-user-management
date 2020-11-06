@@ -2,12 +2,15 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const nodemailer = require("nodemailer");
 const { User, Role } = require("../models");
+
 var transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: "dev.arkar.mm@gmail.com",
-    pass: "hakh872001",
-  },
+host: "mail.privateemail.com",
+port: 587,
+secure: false,
+  auth:{
+      user: 'support@shlc.study',
+      pass: 'shlc.study'
+  }    
 });
 
 //#################################################################################################
