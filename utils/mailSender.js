@@ -19,7 +19,7 @@ const forgotHandlebar = fs.readFileSync(
 );
 
 const registerHandlebar = fs.readFileSync(
-    path.join(__dirname, "../views/forgotpassword.hbs"),
+    path.join(__dirname, "../views/register.hbs"),
     "utf8"
   );
 
