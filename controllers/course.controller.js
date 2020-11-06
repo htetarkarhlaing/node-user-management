@@ -52,6 +52,7 @@ const courseInserter = async (req, res) => {
     tag: req.body.tag,
     level: req.body.level,
     duration: req.body.duration,
+    price: req.body.price
   });
   try {
     const insertCourse = await courseAdder.save();

@@ -14,7 +14,7 @@ route.post("/users/register", userRegister);
 route.get("/users/activiate/:token", userActiviate);
 route.post("/users/login", userLogin);
 route.patch("/users/forgot-password", userForgotPassword);
-route.patch("/users/update-password", userForgotPasswordUpdate);
+route.patch("/users/update-password/:link", userForgotPasswordUpdate);
 route.patch("/users/change-password", verifyToken, userChangepassword);
 route.get("/users", userFetch);
 route.put("/users/enroll-course/:id", userCourseAdder);

@@ -1,17 +1,7 @@
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
-const nodemailer = require("nodemailer");
+const mailSender = require("../utils/mailSender");
 const { User, Role } = require("../models");
-
-var transporter = nodemailer.createTransport({
-host: "mail.privateemail.com",
-port: 587,
-secure: false,
-  auth:{
-      user: 'support@shlc.study',
-      pass: 'shlc.study'
-  }    
-});
 
 //#################################################################################################
 //############################# User Account Registeration route ##################################
@@ -49,30 +39,16 @@ const userRegister = (req, res) => {
           const token = jwt.sign(
             { username, email, phone, password, role, courses },
             process.env.JWT_ACC_ACTIVATION,
-            { expiresIn: "30m" }
+            { expiresIn: "24hr" }
           );
 
-          var mailOptions = {
-            from: "support@shlc.study",
-            to: email,
-            subject: "SHLC account registration.",
-            html: `
-            <h2>Please activiate your account by clicking the link given below</h2>
-            <a href="${process.env.CLIENT_URL}/api/users/activiate/${token}" style="background-color: #4CAF50;
-            border: none;
-            color: white;
-            padding: 15px 32px;
-            text-align: center;
-            text-decoration: none;
-            cursour: pointer;
-            display: inline-block;
-            font-size: 16px;">Click Here</a>
-            `,
-          };
+          const link = `${process.env.CLIENT_URL}/register-activiate/${token}`;
+          const subject = "SHLC account activiation";
+          var body = "register";
 
-          transporter.sendMail(mailOptions, function (error, info) {
-            if (error) {
-              console.log(error);
+          mailSender(email, subject, body, link, (err, data) => {
+            if (err) {
+              console.log(err);
               return res.status(500).json({
                 meta: {
                   success: false,
@@ -91,7 +67,6 @@ const userRegister = (req, res) => {
               });
             }
           });
-          //End of implementing the mailserver with jwt
         }
       });
     } else {
@@ -252,23 +227,12 @@ const userForgotPassword = (req, res) => {
       const token = jwt.sign({ _id }, process.env.JWT_ACC_FORGET_PW, {
         expiresIn: "30m",
       });
-      var mailOptions = {
-        from: "support@shlc.study",
-        to: email,
-        subject: "SHLC account registration.",
-        html: `
-    <h2>Please activiate your account by clicking the link given below</h2>
-    <a href="${process.env.CLIENT_URL}/api/users/reset-password/${token}" style="background-color: #4CAF50;
-    border: none;
-    color: white;
-    padding: 15px 32px;
-    text-align: center;
-    text-decoration: none;
-    cursour: pointer;
-    display: inline-block;
-    font-size: 16px;">click Here</a>
-    `,
-      };
+
+      
+      const link = `${process.env.CLIENT_URL}/forgot-password-update/${token}`;
+      const subject = "SHLC account forgot password";
+      var body = "forgot";
+
       //update the reset link
       User.setResetLink(_id, token, (err, success) => {
         if (err) {
@@ -280,9 +244,9 @@ const userForgotPassword = (req, res) => {
             self: req.originalUrl,
           });
         } else {
-          transporter.sendMail(mailOptions, function (error, info) {
-            if (error) {
-              console.log(error);
+          mailSender(email, subject, body, link, (err, data) => {
+            if (err) {
+              console.log(err);
               return res.status(500).json({
                 meta: {
                   success: false,
