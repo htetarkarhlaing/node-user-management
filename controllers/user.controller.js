@@ -212,8 +212,8 @@ const userForgotPassword = (req, res) => {
   //Check user with such email is exist or not
   const email = req.body.email;
   User.getuserByEmail(email, (err, user) => {
-    if (err) {
-      console.log("Error while getUserByEmail =" + err);
+    if (err || !user) {
+      console.log("Error while getUserByEmail = " + err);
       return res.status(404).json({
         meta: {
           success: false,
